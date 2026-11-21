@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ウンコ vs トイレットペーパー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=M+PLUS+Rounded+1c:wght@500;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: 明るくくだらない、でも作りは真面目な玩具
+   IDEA: トイレの壁タイル＝盤面。木の便座フレームに収まった卓上ゲーム機
+   PICTURE: タイル目地の8x8盤、駒は💩と🧻、ひっくり返る回転アニメ
+   COLOUR and TYPE: 水色タイル＋白目地、茶(ウンコ)と白(紙)、アクセントはトイレの青。Dela Gothic One + M PLUS Rounded
+   LAYOUT: 上に小さなタイトルとスコア、中央に盤、下に操作ボタン */
+:root{color-scheme:light dark;--bg:light-dark(#d9eef3,#0f2228);--ink:light-dark(#1d2b30,#e6f3f6);--tile:light-dark(#9fd3df,#2a5560);--tile2:light-dark(#b4dde7,#30606c);--grout:light-dark(#f7fcfd,#173339);--frame:light-dark(#8a5a36,#5b3a22);--brown:#7a4a22;--accent:light-dark(#1f6fa8,#6fb7e6);--panel:light-dark(#ffffff,#18323a)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);background-image:linear-gradient(var(--grout) 2px,transparent 2px),linear-gradient(90deg,var(--grout) 2px,transparent 2px);background-size:48px 48px;color:var(--ink);font:16px/1.5 "M PLUS Rounded 1c",system-ui,sans-serif;overflow-x:clip;min-height:100vh}
+main{max-width:520px;margin:0 auto;padding:16px 14px 32px;display:grid;gap:12px}
+h1{font:400 clamp(24px,6.5vw,34px)/1.05 "Dela Gothic One",sans-serif;margin:4px 0 0;text-align:center;text-wrap:balance}
+h1 span{color:var(--accent)}
+.score{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center}
+.pl{background:var(--panel);border-radius:14px;padding:8px 12px;display:flex;align-items:center;gap:8px;border:3px solid transparent;transition:border-color .2s}
+.pl.on{border-color:var(--accent)}
+.pl b{font:400 28px/1 "Dela Gothic One",sans-serif;margin-left:auto}
+.pl i{font-style:normal;font-size:28px;line-height:1}
+.pl small{font-size:13px;font-weight:800}
+.msg{font-weight:800;font-size:14px;text-align:center;min-width:5.5em}
+.frame{background:var(--frame);padding:10px;border-radius:22px;box-shadow:0 10px 0 light-dark(#5e3b20,#2c1b0f),0 18px 30px #0004}
+#bd{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:3px;background:var(--grout);padding:3px;border-radius:12px;aspect-ratio:1}
+.c{position:relative;border:0;padding:0;border-radius:4px;background:linear-gradient(135deg,var(--tile2),var(--tile));cursor:default;font-size:clamp(22px,8vw,42px);line-height:1;display:grid;place-items:center;perspective:300px}
+.c.ok{cursor:pointer}
+.c.ok::after{content:"";width:26%;height:26%;border-radius:50%;background:var(--accent);opacity:.35}
+.c.last{box-shadow:inset 0 0 0 3px #f2b53a}
+.c span{display:block;filter:drop-shadow(0 2px 1px #0003)}
+.c span.flip{animation:fl .38s ease}
+.c span.drop{animation:dp .28s ease-out}
+@keyframes fl{0%{transform:rotateY(0)}50%{transform:rotateY(90deg) scale(1.15)}100%{transform:rotateY(0)}}
+@keyframes dp{0%{transform:scale(1.6);opacity:0}100%{transform:scale(1);opacity:1}}
+.c:focus-visible{outline:3px solid #f2b53a;outline-offset:1px}
+.ctl{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+button.b,select{font:800 15px "M PLUS Rounded 1c",sans-serif;min-height:44px;padding:0 16px;border-radius:12px;border:2px solid var(--accent);background:var(--panel);color:var(--ink);cursor:pointer}
+button.b.pri{background:var(--accent);color:#fff}
+button.b:disabled{opacity:.4;cursor:default}
+select{font-size:16px}
+.over{position:fixed;inset:0;display:none;place-items:center;background:#0006;padding:20px;z-index:5}
+.over.show{display:grid}
+.card{background:var(--panel);border-radius:20px;padding:24px 22px;text-align:center;max-width:320px;width:100%;box-shadow:0 12px 40px #0005}
+.card .big{font-size:64px;line-height:1.1}
+.card h2{font:400 26px/1.15 "Dela Gothic One",sans-serif;margin:6px 0}
+.card p{margin:4px 0 16px}
+.note{text-align:center;font-size:13px;opacity:.75;margin:0}
+@media(prefers-reduced-motion:reduce){.c span{animation:none!important}}
+</style>
+</head>
+<body>
+<main>
+<h1>ウンコ<span>vs</span>トイレットペーパー</h1>
+<div class="score">
+  <div class="pl" id="p1"><i>💩</i><small id="n1">あなた</small><b id="s1">2</b></div>
+  <div class="msg" id="msg"></div>
+  <div class="pl" id="p2"><i>🧻</i><small id="n2">CPU</small><b id="s2">2</b></div>
+</div>
+<div class="frame"><div id="bd" role="grid" aria-label="盤面"></div></div>
+<div class="ctl">
+  <select id="mode" aria-label="対戦モード">
+    <option value="1">CPU（よわい）</option>
+    <option value="2" selected>CPU（ふつう）</option>
+    <option value="0">2人で対戦</option>
+  </select>
+  <button class="b" id="undo">1手戻す</button>
+  <button class="b pri" id="new">最初から</button>
+</div>
+<p class="note">💩が先手。青い点のマスに置けます。</p>
+</main>
+<div class="over" id="ov"><div class="card"><div class="big" id="ob"></div><h2 id="ot"></h2><p id="os"></p><button class="b pri" id="again">もう一回</button></div></div>
+<script>
+{
+const P=['','💩','🧻'],D=[-9,-8,-7,-1,1,7,8,9];
+const W=[100,-20,10,5,5,10,-20,100,-20,-50,-2,-2,-2,-2,-50,-20,10,-2,1,1,1,1,-2,10,5,-2,1,0,0,1,-2,5,5,-2,1,0,0,1,-2,5,10,-2,1,1,1,1,-2,10,-20,-50,-2,-2,-2,-2,-50,-20,100,-20,10,5,5,10,-20,100];
+const bd=document.getElementById('bd'),$=id=>document.getElementById(id);
+let b,turn,hist,last,busy=false,mode=2,flipped=[];
+const cells=[];
+for(let i=0;i<64;i++){const c=document.createElement('button');c.className='c';c.setAttribute('aria-label',`${i%8+1}列${(i>>3)+1}行`);c.onclick=()=>human(i);bd.appendChild(c);cells.push(c)}
+function flips(B,i,p){if(B[i])return[];const o=3-p,r=[];for(const d of D){let j=i+d,t=[];while(j>=0&&j<64&&Math.abs((j%8)-((j-d)%8))<=1&&B[j]===o){t.push(j);j+=d}if(t.length&&j>=0&&j<64&&Math.abs((j%8)-((j-d)%8))<=1&&B[j]===p)r.push(...t)}return r}
+function moves(B,p){const m=[];for(let i=0;i<64;i++)if(flips(B,i,p).length)m.push(i);return m}
+function play(B,i,p){const f=flips(B,i,p);B[i]=p;for(const j of f)B[j]=p;return f}
+function evalB(B,p){let s=0;for(let i=0;i<64;i++)if(B[i])s+=B[i]===p?W[i]:-W[i];return s+4*(moves(B,p).length-moves(B,3-p).length)}
+function search(B,p,d,a,be){const m=moves(B,p);if(!d)return evalB(B,p);if(!m.length){if(!moves(B,3-p).length){const n=B.filter(x=>x===p).length-B.filter(x=>x===3-p).length;return n*1000}return -search(B,3-p,d-1,-be,-a)}for(const i of m){const C=B.slice();play(C,i,p);const v=-search(C,3-p,d-1,-be,-a);if(v>a)a=v;if(a>=be)break}return a}
+function cpuPick(){const m=moves(b,turn);if(mode===1){let best=m[0],bv=-1e9;for(const i of m){const v=W[i]+Math.random()*60;if(v>bv){bv=v;best=i}}return best}
+let best=m[0],bv=-1e9;for(const i of m){const C=b.slice();play(C,i,turn);const v=-search(C,3-turn,3,-1e9,1e9)+Math.random();if(v>bv){bv=v;best=i}}return best}
+function reset(){b=Array(64).fill(0);b[27]=b[36]=2;b[28]=b[35]=1;turn=1;hist=[];last=-1;flipped=[];busy=false;$('ov').classList.remove('show');render()}
+function render(placed){const m=busy||isCpu()?[]:moves(b,turn);let s1=0,s2=0;
+for(let i=0;i<64;i++){const c=cells[i],v=b[i];if(v===1)s1++;if(v===2)s2++;
+c.innerHTML=v?`<span class="${i===placed?'drop':flipped.includes(i)?'flip':''}">${P[v]}</span>`:'';
+c.classList.toggle('ok',m.includes(i));c.classList.toggle('last',i===last);c.disabled=!m.includes(i)&&!v?false:false}
+$('s1').textContent=s1;$('s2').textContent=s2;$('p1').classList.toggle('on',turn===1);$('p2').classList.toggle('on',turn===2);
+$('n1').textContent=mode?'あなた':'1P';$('n2').textContent=mode?'CPU':'2P';
+$('msg').textContent=isCpu()?'考え中…':`${P[turn]}の番`;$('undo').disabled=!hist.length||busy}
+function isCpu(){return mode&&turn===2}
+function doMove(i){hist.push({b:b.slice(),turn,last});flipped=play(b,i,turn);last=i;turn=3-turn;
+if(!moves(b,turn).length){if(!moves(b,3-turn).length){render(i);return finish()}turn=3-turn;render(i);toast(`${P[3-turn]}はパス`);}else render(i);
+if(isCpu()){busy=true;render(i);setTimeout(()=>{busy=false;doMove(cpuPick())},550)}}
+function human(i){if(busy||isCpu()||!flips(b,i,turn).length)return;doMove(i)}
+function toast(t){$('msg').textContent=t;setTimeout(()=>render(),900)}
+function finish(){const s1=b.filter(x=>x===1).length,s2=b.filter(x=>x===2).length;
+let big,t;if(s1>s2){big='💩';t=mode?'ウンコの勝ち！あなたの勝利':'💩の勝ち！'}else if(s2>s1){big='🧻';t=mode?'紙の勝ち…きれいに拭かれた':'🧻の勝ち！'}else{big='💩🧻';t='引き分け'}
+$('ob').textContent=big;$('ot').textContent=t;$('os').textContent=`💩 ${s1} − ${s2} 🧻`;setTimeout(()=>$('ov').classList.add('show'),600)}
+$('new').onclick=reset;$('again').onclick=reset;
+$('mode').onchange=e=>{mode=+e.target.value;try{localStorage.setItem('uo-mode',mode)}catch(_){}reset()};
+$('undo').onclick=()=>{if(busy||!hist.length)return;let h=hist.pop();if(mode)while(h.turn===2&&hist.length)h=hist.pop();b=h.b;turn=h.turn;last=h.last;flipped=[];render()};
+try{const s=localStorage.getItem('uo-mode');if(s!==null){mode=+s;$('mode').value=s}}catch(_){}
+reset();
+}
+</script>
+</body>
+</html>
