@@ -68,6 +68,7 @@ select{font-size:16px}
     <option value="2" selected>CPU（ふつう）</option>
     <option value="0">2人で対戦</option>
   </select>
+  <button class="b" id="mute" aria-label="音のオンオフ">🔊</button>
   <button class="b" id="undo">1手戻す</button>
   <button class="b pri" id="new">最初から</button>
 </div>
@@ -76,6 +77,30 @@ select{font-size:16px}
 <div class="over" id="ov"><div class="card"><div class="big" id="ob"></div><h2 id="ot"></h2><p id="os"></p><button class="b pri" id="again">もう一回</button></div></div>
 <script>
 {
+const SND=(()=>{let ac=null,master,bg,fx,nb=null,cur=null,step=0,next=0,timer=null,muted=false;
+try{muted=localStorage.getItem('unko-mute')==='1'}catch(_){}
+const mf=m=>440*2**((m-69)/12);
+function init(){try{if(!ac){ac=new(window.AudioContext||window.webkitAudioContext)();master=ac.createGain();master.connect(ac.destination);bg=ac.createGain();bg.gain.value=.55;bg.connect(master);fx=ac.createGain();fx.connect(master);master.gain.value=muted?0:1;
+ nb=ac.createBuffer(1,ac.sampleRate,ac.sampleRate);const d=nb.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1}if(ac.state!=='running')ac.resume()}catch(_){}}
+function tone(f,d,type,v,t,to,dest){if(!ac)return;t=t||ac.currentTime;const o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(to)o.frequency.exponentialRampToValueAtTime(to,t+d);g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g).connect(dest||fx);o.start(t);o.stop(t+d+.03)}
+function noise(d,v,t,hp,dest){if(!ac)return;t=t||ac.currentTime;const s=ac.createBufferSource(),g=ac.createGain(),f=ac.createBiquadFilter();s.buffer=nb;f.type=hp?'highpass':'lowpass';f.frequency.value=hp||1200;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);s.connect(f).connect(g).connect(dest||fx);s.start(t,Math.random()*.5);s.stop(t+d+.03)}
+function fart(){if(!ac)return;const t=ac.currentTime,o=ac.createOscillator(),l=ac.createOscillator(),lg=ac.createGain(),f=ac.createBiquadFilter(),g=ac.createGain();
+ o.type='sawtooth';o.frequency.setValueAtTime(95,t);o.frequency.linearRampToValueAtTime(60,t+.7);l.frequency.value=22;lg.gain.value=30;l.connect(lg).connect(o.frequency);f.type='lowpass';f.frequency.value=450;
+ g.gain.setValueAtTime(.001,t);g.gain.exponentialRampToValueAtTime(.6,t+.03);g.gain.setValueAtTime(.6,t+.4);g.gain.exponentialRampToValueAtTime(.001,t+.75);o.connect(f).connect(g).connect(fx);o.start(t);l.start(t);o.stop(t+.8);l.stop(t+.8)}
+function arp(ns,dt,type,v){if(!ac)return;const t=ac.currentTime;ns.forEach((n,i)=>tone(mf(n),dt*1.6,type,v,t+i*dt))}
+function sched(){if(!cur||!ac)return;const sl=60/cur.bpm/4;if(next<ac.currentTime-.2)next=ac.currentTime+.05;
+ while(next<ac.currentTime+.15){const i=step,m=cur.mel[i],b=cur.bass[i%cur.bass.length],dr=cur.dr[i%cur.dr.length];
+  if(m)tone(mf(m),sl*(cur.len||1.8),cur.mw||'square',cur.mv||.09,next,0,bg);if(b)tone(mf(b),sl*1.7,'triangle',.3,next,0,bg);
+  if(dr==='k')tone(140,.14,'sine',.5,next,45,bg);else if(dr==='s')noise(.12,.22,next,900,bg);else if(dr==='h')noise(.04,.09,next,6000,bg);
+  next+=sl;step=(step+1)%cur.mel.length;if(!step&&cur.once){cur=null;break}}}
+function song(s){if(!ac)return;cur=s;step=0;next=ac.currentTime+.06;if(!timer)timer=setInterval(sched,25)}
+function stop(){cur=null}
+function setMute(v){muted=v;try{localStorage.setItem('unko-mute',v?'1':'0')}catch(_){}if(master)master.gain.value=v?0:1}
+function pause(v){if(!ac)return;try{v?ac.suspend():ac.resume()}catch(_){}}
+return{init,tone,noise,fart,arp,song,stop,setMute,pause,mf,get muted(){return muted}}})();
+const SG={bpm:100,mw:'triangle',mv:.14,len:2.6,mel:[72,0,76,0,79,0,76,0,77,0,81,0,79,0,0,0,76,0,79,0,84,0,79,0,81,0,79,0,77,0,76,0,74,0,77,0,81,0,77,0,79,0,76,0,72,0,0,0,74,0,76,0,77,0,79,0,76,0,74,0,72,0,0,0],
+ bass:[48,41,48,45,41,48,43,48].flatMap(r=>[r,0,0,0,r+7,0,0,0]),dr:'k...h...s...h...'};
+let musicOn=false;const music=()=>{SND.init();if(!musicOn&&!SND.muted){SND.song(SG);musicOn=true}};
 const P=['','💩','🧻'],D=[-9,-8,-7,-1,1,7,8,9];
 const W=[100,-20,10,5,5,10,-20,100,-20,-50,-2,-2,-2,-2,-50,-20,10,-2,1,1,1,1,-2,10,5,-2,1,0,0,1,-2,5,5,-2,1,0,0,1,-2,5,10,-2,1,1,1,1,-2,10,-20,-50,-2,-2,-2,-2,-50,-20,100,-20,10,5,5,10,-20,100];
 const bd=document.getElementById('bd'),$=id=>document.getElementById(id);
@@ -98,15 +123,16 @@ $('s1').textContent=s1;$('s2').textContent=s2;$('p1').classList.toggle('on',turn
 $('n1').textContent=mode?'あなた':'1P';$('n2').textContent=mode?'CPU':'2P';
 $('msg').textContent=isCpu()?'考え中…':`${P[turn]}の番`;$('undo').disabled=!hist.length||busy}
 function isCpu(){return mode&&turn===2}
-function doMove(i){hist.push({b:b.slice(),turn,last});flipped=play(b,i,turn);last=i;turn=3-turn;
-if(!moves(b,turn).length){if(!moves(b,3-turn).length){render(i);return finish()}turn=3-turn;render(i);toast(`${P[3-turn]}はパス`);}else render(i);
+function doMove(i){SND.tone(isCpu()?440:560,.1,'triangle',.3);setTimeout(()=>flipped.forEach((_,k)=>setTimeout(()=>SND.tone(660+k*60,.07,'sine',.13),k*45)),60);hist.push({b:b.slice(),turn,last});flipped=play(b,i,turn);last=i;turn=3-turn;
+if(!moves(b,turn).length){if(!moves(b,3-turn).length){render(i);return finish()}turn=3-turn;render(i);toast(`${P[3-turn]}はパス`);SND.tone(300,.3,'triangle',.2,0,200);}else render(i);
 if(isCpu()){busy=true;render(i);setTimeout(()=>{busy=false;doMove(cpuPick())},550)}}
-function human(i){if(busy||isCpu()||!flips(b,i,turn).length)return;doMove(i)}
+function human(i){music();if(busy||isCpu()||!flips(b,i,turn).length)return;doMove(i)}
 function toast(t){$('msg').textContent=t;setTimeout(()=>render(),900)}
-function finish(){const s1=b.filter(x=>x===1).length,s2=b.filter(x=>x===2).length;
+function finish(){SND.stop();musicOn=false;const s1=b.filter(x=>x===1).length,s2=b.filter(x=>x===2).length;
 let big,t;if(s1>s2){big='💩';t=mode?'ウンコの勝ち！あなたの勝利':'💩の勝ち！'}else if(s2>s1){big='🧻';t=mode?'紙の勝ち…きれいに拭かれた':'🧻の勝ち！'}else{big='💩🧻';t='引き分け'}
-$('ob').textContent=big;$('ot').textContent=t;$('os').textContent=`💩 ${s1} − ${s2} 🧻`;setTimeout(()=>$('ov').classList.add('show'),600)}
-$('new').onclick=reset;$('again').onclick=reset;
+setTimeout(()=>SND.arp(s1>s2&&mode||(!mode&&s1!==s2)?[72,76,79,84,88]:s1===s2?[72,74,72]:[67,63,60,55],.14,'square',.15),500);$('ob').textContent=big;$('ot').textContent=t;$('os').textContent=`💩 ${s1} − ${s2} 🧻`;setTimeout(()=>$('ov').classList.add('show'),600)}
+const mb=$('mute'),sm=()=>mb.textContent=SND.muted?'🔇 音':'🔊 音';sm();mb.onclick=()=>{SND.init();SND.setMute(!SND.muted);sm();if(!SND.muted)music()};
+$('new').onclick=()=>{reset();music()};$('again').onclick=()=>{reset();music()};
 $('mode').onchange=e=>{mode=+e.target.value;try{localStorage.setItem('uo-mode',mode)}catch(_){}reset()};
 $('undo').onclick=()=>{if(busy||!hist.length)return;let h=hist.pop();if(mode)while(h.turn===2&&hist.length)h=hist.pop();b=h.b;turn=h.turn;last=h.last;flipped=[];render()};
 try{const s=localStorage.getItem('uo-mode');if(s!==null){mode=+s;$('mode').value=s}}catch(_){}
